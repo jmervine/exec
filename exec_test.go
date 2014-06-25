@@ -31,6 +31,16 @@ func ExampleExec() {
 	// exec: "asdf": executable file not found in $PATH
 }
 
+func ExampleX() {
+	var o string
+	var e error
+
+	if o, e = exec.X("echo foo"); e != nil {
+		fmt.Printf("%v", e)
+	}
+	fmt.Print(o)
+}
+
 func ExampleExecTee() {
 	var e error
 	if _, e = exec.ExecTee(os.Stdout, Script); e != nil {

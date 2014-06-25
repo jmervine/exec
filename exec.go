@@ -2,13 +2,23 @@
 //
 // *Basic Usage*
 //
-//	if out, err := exec.Exec("echo", "foo"); err != nil {
+//	var err error
+//	var out []byte
+//	if out, err = exec.Exec("echo", "foo"); err != nil {
 //		println(string(out))
 //	}
 //
-//	if wait, err := exec.Fork("echo", "foo"); err != nil {
+//	var err error
+//	var out string
+//	if out, err = exec.X("echo foo"); err != nil {
+//		println(out)
+//	}
+//
+//	var err error
+//	var out []byte
+//	if wait, err = exec.Fork("echo", "foo"); err != nil {
 //		println("waiting...")
-//		if out, err := wait(); err != nil {
+//		if out, err = wait(); err != nil {
 //			println(string(out))
 //		}
 //	}
@@ -20,6 +30,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"strings"
 )
 
 // Noout is a no-op writer for silencing stdout and stderr.
@@ -45,6 +56,19 @@ var _ = io.WriteCloser(Noout)
 // single `[]btye`. Errors are turned as `error`.
 func Exec(command string, args ...string) (output []byte, err error) {
 	return ExecTee(Noout, command, args...)
+}
+
+// X takes a full command as a single string and returns a string with the
+// combined output of both STDOUT and STDERR.
+func X(command string) (out string, err error) {
+	var o []byte
+
+	split := strings.Split(command, " ")
+	cmd := split[0]
+
+	o, err = Exec(cmd, strings.Join(split[1:], " "))
+
+	return string(o), err
 }
 
 // ExecTee runs a command and arguments and returns both STDERR and STDOUT in a
