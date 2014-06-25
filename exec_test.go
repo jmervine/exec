@@ -9,6 +9,7 @@ import (
 // Example's used in place of Test's where possible.
 
 var Script = "./_support/test.sh"
+var SlowScript = "./_support/slow.sh"
 
 func ExampleExec() {
 	// TODO: stub script to stream to both stdout and stderr
@@ -128,6 +129,26 @@ func ExampleFork() {
 	// stdout: foo
 	// stderr: bar
 	// exec: "asdf": executable file not found in $PATH
+}
+
+func ExampleFork_Slow() {
+	var o []byte
+	var e error
+	var wait func() ([]byte, error)
+	if wait, e = exec.Fork(SlowScript); e != nil {
+		fmt.Printf("%v\n", e)
+	} else {
+		fmt.Println("waiting")
+		if o, e = wait(); e != nil {
+			fmt.Printf("%v", e)
+		}
+		fmt.Print(string(o))
+	}
+
+	// Output:
+	// waiting
+	// stdout: foo
+	// stderr: bar
 }
 
 func ExampleForkTee() {
