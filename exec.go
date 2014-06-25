@@ -1,3 +1,18 @@
+// Package exec provides a simplification of native `os/exec`.
+//
+// *Basic Usage*
+//
+//	if out, err := exec.Exec("echo", "foo"); err != nil {
+//		println(string(out))
+//	}
+//
+//	if wait, err := exec.Fork("echo", "foo"); err != nil {
+//		println("waiting...")
+//		if out, err := wait(); err != nil {
+//			println(string(out))
+//		}
+//	}
+//
 package exec
 
 import (
@@ -10,8 +25,7 @@ import (
 // Noout is a no-op writer for silencing stdout and stderr.
 var Noout = NopWriteCloser{}
 
-// NopWriteCloser creates a writer that does nothing, allow Sh to and Sh1 to not
-// stream and just return a string.
+// NopWriteCloser satisfies `io.WriteCloser` and does nothing.
 type NopWriteCloser struct{}
 
 // Write is the NopWriteCloser write method which does nothing.
@@ -24,15 +38,18 @@ func (w NopWriteCloser) Close() error {
 	return nil
 }
 
+// Ensure that Noout satisfies io.WriteCloser
+var _ = io.WriteCloser(Noout)
+
+// Exec runs a command and arguments and returns both STDERR and STDOUT in a
+// single `[]btye`. Errors are turned as `error`.
 func Exec(command string, args ...string) (output []byte, err error) {
 	return ExecTee(Noout, command, args...)
 }
 
-// X is an alias to Exec
-func X(command string, args ...string) (output []byte, err error) {
-	return Exec(command, args...)
-}
-
+// ExecTee runs a command and arguments and returns both STDERR and STDOUT in a
+// single `[]btye`. Errors are turned as `error`. Additionally, it pipes both STDOUT
+// and STDERR to the passed `io.WriteCloser`.
 func ExecTee(stream io.WriteCloser, command string, args ...string) (out []byte, err error) {
 	cmd := exec.Command(command, args...)
 	read, write, _ := os.Pipe()
@@ -51,10 +68,15 @@ func ExecTee(stream io.WriteCloser, command string, args ...string) (out []byte,
 	return ioutil.ReadAll(read)
 }
 
+// Exec runs a command and arguments and returns both STDERR and STDOUT in a
+// two `[]btye`'s. Errors are turned as `error`.
 func Exec2(command string, args ...string) (oout, eout []byte, err error) {
 	return ExecTee2(Noout, Noout, command, args...)
 }
 
+// ExecTee runs a command and arguments and returns both STDERR and STDOUT in a
+// two `[]btye`'s. Errors are turned as `error`. Additionally, it pipes STDOUT
+// and STDERR to the respective `io.WriteCloser`'s.
 func ExecTee2(ostream, estream io.WriteCloser, command string, args ...string) (oout, eout []byte, err error) {
 	cmd := exec.Command(command, args...)
 	oread, owrite, _ := os.Pipe()
@@ -83,10 +105,19 @@ func ExecTee2(ostream, estream io.WriteCloser, command string, args ...string) (
 	return
 }
 
+// Fork spawns a command and args and returns a function to wait
+// for completion. The returned wait function returns both STDOUT
+// and STDERR in a single `[]byte`, along with `error` should one
+// occur.
 func Fork(command string, args ...string) (wait func() ([]byte, error), err error) {
 	return ForkTee(Noout, command, args...)
 }
 
+// ForkTee spawns a command and args and returns a function to wait
+// for completion. The returned wait function returns both STDOUT
+// and STDERR in a `[]byte`, along with `error` should one occur.
+// Additionally, it pipes STDOUT and STDERR to the respective
+// `io.WriteCloser`'s.
 func ForkTee(stream io.WriteCloser, command string, args ...string) (wait func() ([]byte, error), err error) {
 	cmd := exec.Command(command, args...)
 	read, write, _ := os.Pipe()
@@ -109,10 +140,19 @@ func ForkTee(stream io.WriteCloser, command string, args ...string) (wait func()
 	return
 }
 
+// Fork2 spawns a command and args and returns a function to wait
+// for completion. The returned wait function returns STDOUT and
+// STDERR in separate `[]byte`'s, along with `error` should one
+// occur.
 func Fork2(command string, args ...string) (wait func() ([]byte, []byte, error), err error) {
 	return ForkTee2(Noout, Noout, command, args...)
 }
 
+// ForkTee2 spawns a command and args and returns a function to wait
+// for completion. The returned wait function returns STDOUT and
+// STDERR in separate `[]byte`'s, along with `error` should one
+// occur. Additionally, it pipes STDOUT and STDERR to the respective
+// `io.WriteCloser`'s.
 func ForkTee2(ostream, estream io.WriteCloser, command string, args ...string) (wait func() ([]byte, []byte, error), err error) {
 	cmd := exec.Command(command, args...)
 	oread, owrite, _ := os.Pipe()
