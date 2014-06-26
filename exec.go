@@ -24,6 +24,10 @@
 //		}
 //	}
 //
+//	// Fire and forget.
+//	exec.Fork("bash", "./main.sh") // Note: this doesn't stream
+//                                 // to os.Stdout with ForkTee
+//
 package exec
 
 import (
