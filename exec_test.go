@@ -12,19 +12,17 @@ var Script = "./_support/test.sh"
 var SlowScript = "./_support/slow.sh"
 
 func ExampleExec() {
-	// TODO: stub script to stream to both stdout and stderr
-	var o []byte
-	var e error
-
-	if o, e = exec.Exec(Script); e != nil {
-		fmt.Printf("%v", e)
+    out, err := exec.Exec(Script)
+    if err != nil {
+		fmt.Printf("%v", err)
 	}
-	fmt.Print(string(o))
+	fmt.Print(string(out))
 
-	if o, e = exec.Exec("asdf"); e != nil {
-		fmt.Printf("%v", e)
+    out, err = exec.Exec("asdf")
+    if err != nil {
+		fmt.Printf("%v", err)
 	}
-	fmt.Print(string(o))
+	fmt.Print(string(out))
 
 	// Output:
 	// stdout: foo
