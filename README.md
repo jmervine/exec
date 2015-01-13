@@ -5,7 +5,7 @@
 ```go
 import "github.com/jmervine/exec"
 
-# or with versioning
+// or with versioning
 import "github.com/jmervine/exec/v2"
 ```
 
