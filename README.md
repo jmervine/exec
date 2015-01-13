@@ -4,6 +4,9 @@
 
 ```go
 import "github.com/jmervine/exec"
+
+# or with versioning
+import "github.com/jmervine/exec/v2"
 ```
 
 #### Basic Usage

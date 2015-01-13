@@ -90,11 +90,12 @@ func ExecTee(stream io.WriteCloser, command string, args ...string) (out []byte,
 
 	err = cmd.Run()
 	write.Close()
-	if err != nil {
-		return
-	}
 
-	return ioutil.ReadAll(read)
+	out, readErr := ioutil.ReadAll(read)
+	if readErr != nil {
+		return out, readErr
+	}
+	return
 }
 
 // Exec runs a command and arguments and returns both STDERR and STDOUT in a
@@ -122,15 +123,18 @@ func ExecTee2(ostream, estream io.WriteCloser, command string, args ...string) (
 	err = cmd.Run()
 	owrite.Close()
 	ewrite.Close()
-	if err != nil {
-		return
+
+	oout, oreadErr := ioutil.ReadAll(oread)
+	eout, ereadErr := ioutil.ReadAll(eread)
+
+	if oreadErr != nil {
+		return oout, eout, oreadErr
 	}
 
-	if oout, err = ioutil.ReadAll(oread); err != nil {
-		return
+	if ereadErr != nil {
+		return oout, eout, ereadErr
 	}
 
-	eout, err = ioutil.ReadAll(eread)
 	return
 }
 
@@ -154,16 +158,23 @@ func ForkTee(stream io.WriteCloser, command string, args ...string) (wait func()
 	cmd.Stdout = io.MultiWriter(write, stream)
 	cmd.Stderr = io.MultiWriter(write, stream)
 	err = cmd.Start()
-	if err != nil {
-		return
-	}
 
-	wait = func() ([]byte, error) {
+	wait = func() (out []byte, err error) {
 		defer func() { read.Close() }()
 
-		err = cmd.Wait()
+		waitErr := cmd.Wait()
 		write.Close()
-		return ioutil.ReadAll(read)
+		out, readErr := ioutil.ReadAll(read)
+
+		if waitErr != nil {
+			return out, waitErr
+		}
+
+		if readErr != nil {
+			return out, readErr
+		}
+
+		return
 	}
 
 	return
@@ -194,22 +205,32 @@ func ForkTee2(ostream, estream io.WriteCloser, command string, args ...string) (
 		return
 	}
 
-	wait = func() ([]byte, []byte, error) {
-		var oout, eout []byte
+	wait = func() (oout []byte, eout []byte, err error) {
 		defer func() {
 			oread.Close()
 			eread.Close()
 		}()
 
-		err = cmd.Wait()
+		waitErr := cmd.Wait()
 		owrite.Close()
 		ewrite.Close()
-		if oout, err = ioutil.ReadAll(oread); err != nil {
-			return oout, eout, err
+
+		oout, ooutErr := ioutil.ReadAll(oread)
+		eout, eoutErr := ioutil.ReadAll(eread)
+
+		if waitErr != nil {
+			return oout, eout, waitErr
 		}
 
-		eout, err = ioutil.ReadAll(eread)
-		return oout, eout, err
+		if ooutErr != nil {
+			return oout, eout, ooutErr
+		}
+
+		if eoutErr != nil {
+			return oout, eout, eoutErr
+		}
+
+		return
 	}
 
 	return
