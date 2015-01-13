@@ -90,11 +90,12 @@ func ExecTee(stream io.WriteCloser, command string, args ...string) (out []byte,
 
 	err = cmd.Run()
 	write.Close()
-	if err != nil {
-		return
-	}
 
-	return ioutil.ReadAll(read)
+	out, readErr := ioutil.ReadAll(read)
+	if readErr != nil {
+		return out, readErr
+	}
+	return
 }
 
 // Exec runs a command and arguments and returns both STDERR and STDOUT in a
