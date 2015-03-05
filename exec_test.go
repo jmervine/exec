@@ -2,7 +2,7 @@ package exec_test
 
 import (
 	"fmt"
-	"github.com/jmervine/exec"
+	"github.com/jmervine/exec/v2"
 	"os"
 )
 
@@ -12,14 +12,14 @@ var Script = "./_support/test.sh"
 var SlowScript = "./_support/slow.sh"
 
 func ExampleExec() {
-    out, err := exec.Exec(Script)
-    if err != nil {
+	out, err := exec.Exec(Script)
+	if err != nil {
 		fmt.Printf("%v", err)
 	}
 	fmt.Print(string(out))
 
-    out, err = exec.Exec("asdf")
-    if err != nil {
+	out, err = exec.Exec("asdf")
+	if err != nil {
 		fmt.Printf("%v", err)
 	}
 	fmt.Print(string(out))
