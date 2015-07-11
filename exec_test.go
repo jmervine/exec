@@ -2,7 +2,7 @@ package exec_test
 
 import (
 	"fmt"
-	"github.com/jmervine/exec/v2"
+	"github.com/jmervine/exec"
 	"os"
 )
 
